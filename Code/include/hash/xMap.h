@@ -30,7 +30,8 @@ using namespace std;
  *      xMap<string, int>: map from string to int 
  */
 template<class K, class V>
-class xMap: public IMap<K,V>{
+class xMap: public IMap<K,V>
+{
 public:
     class Entry; //forward declaration
     
@@ -195,30 +196,45 @@ public:
 //////////////////////////////////////////////////////////////////////
 
 template<class K, class V>
-xMap<K,V>::xMap(
-                int (*hashCode)(K&,int),
-                float loadFactor,
-                bool (*valueEqual)(V& lhs, V& rhs),
-                void (*deleteValues)(xMap<K,V>*),
-                bool (*keyEqual)(K& lhs, K& rhs),
-                void (*deleteKeys)(xMap<K,V>* pMap) ){
+xMap<K,V>::xMap(int (*hashCode)(K&,int), float loadFactor, bool (*valueEqual)(V& lhs, V& rhs), void (*deleteValues)(xMap<K,V>*), bool (*keyEqual)(K& lhs, K& rhs), void (*deleteKeys)(xMap<K,V>* pMap))
+{
     //YOUR CODE IS HERE
+    this -> hashCode = hashCode;
+    this -> loadFactor = loadFactor;
+    this -> valueEqual = valueEqual;
+    this -> deleteValues = deleteValues;
+    this -> keyEqual = keyEqual;
+    this -> deleteKeys = deleteKeys;
+    this -> capacity = 10;
+    this -> count = 0;
+    this -> table = new DLinkedList<Entry* >[capacity];
 }
 
 template<class K, class V>
-xMap<K,V>::xMap(const xMap<K,V>& map){
+xMap<K,V>::xMap(const xMap<K,V>& map)
+{
     //YOUR CODE IS HERE
+    this -> copyMapFrom(map);
 }
 
 template<class K, class V>
-xMap<K,V>& xMap<K,V>::operator=(const xMap<K,V>& map){
+xMap<K,V>& xMap<K,V>::operator=(const xMap<K,V>& map)
+{
     //YOUR CODE IS HERE
+    if(this != &map)
+    {
+        this -> removeInternalData();
+        this -> copyMapFrom(map);
+    }
+
     return *this;
 }
 
 template<class K, class V>
-xMap<K,V>::~xMap(){
-    r//YOUR CODE IS HERE
+xMap<K,V>::~xMap()
+{
+    //YOUR CODE IS HERE
+    this -> removeInternalData();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -226,21 +242,53 @@ xMap<K,V>::~xMap(){
 //////////////////////////////////////////////////////////////////////
 
 template<class K, class V>
-V xMap<K,V>::put(K key, V value){
-    int index = this->hashCode(key, capacity);
+V xMap<K,V>::put(K key, V value)
+{
+    int index = this -> hashCode(key, capacity);
     V retValue = value;
-    //YOUR CODE IS HERE    
+    //YOUR CODE IS HERE
+    DLinkedList<Entry *>&list = this -> table[index];
+
+    for(auto it = list.begin(); it != list.end(); it++)
+    {
+        Entry *pEntry = *it;
+
+        if(keyEQ(pEntry -> key, key))
+        {
+            retValue = pEntry -> value;
+            pEntry -> value = value;
+            return retValue;
+        }
+    }
+
+    Entry *newEntry = new Entry(key, value);
+    list.add(newEntry);
+
+    this -> count++;
+    this -> ensureLoadFactor(this -> count);
 
     return retValue;
 }
 
 template<class K, class V>
-V& xMap<K,V>::get(K key){
+V& xMap<K,V>::get(K key)
+{
     int index = hashCode(key, capacity);
-    V retValue = value;
-    //YOUR CODE IS HERE   
+    //YOUR CODE IS HERE
+    DLinkedList<Entry *>&list = this -> table[index];
+    auto it = list.begin();
+
+    while(it != list.end())
+    {
+        Entry *pEntry = *it;
+
+        if(keyEQ(pEntry -> key, key))
+        {
+            return pEntry -> value;
+        }
+        it++;
+    }
     
-
     //key: not found
     stringstream os;
     os << "key (" << key << ") is not found";
@@ -248,12 +296,32 @@ V& xMap<K,V>::get(K key){
 }
 
 template<class K, class V>
-V xMap<K,V>::remove(K key,void (*deleteKeyInMap)(K)){
+V xMap<K,V>::remove(K key,void (*deleteKeyInMap)(K))
+{
     int index = hashCode(key, capacity);
-    V retValue = value;
-    //YOUR CODE IS HERE   
+    //YOUR CODE IS HERE
+    DLinkedList<Entry *>&list = this -> table[index];
+    // typename DLinkedList<Entry *>::Iterator it = list.begin();
 
-  
+    for(auto it = list.begin(); it != list.end(); it++)
+    {
+        Entry *pEntry = *it;
+
+        if(keyEQ(pEntry -> key, key))
+        {
+            V retValue = pEntry -> value;
+
+            if(deleteKeyInMap)
+            {
+                deleteKeyInMap(pEntry -> key);
+            }
+            list.removeItem(pEntry, &xMap<K, V>::deleteEntry);
+            this -> count--;
+
+            return retValue;
+        }
+    }
+
     //key: not found
     stringstream os;
     os << "key (" << key << ") is not found";
@@ -261,62 +329,171 @@ V xMap<K,V>::remove(K key,void (*deleteKeyInMap)(K)){
 }
 
 template<class K, class V>
-bool xMap<K,V>::remove(K key, V value, void (*deleteKeyInMap)(K), void (*deleteValueInMap)(V)){
-    //YOUR CODE IS HERE   
+bool xMap<K,V>::remove(K key, V value, void (*deleteKeyInMap)(K), void (*deleteValueInMap)(V))
+{
+    //YOUR CODE IS HERE
+    int index = hashCode(key, capacity);
+    DLinkedList<Entry *>&list = this -> table[index];
+
+    for(auto it = list.begin(); it != list.end(); it++)
+    {
+        Entry *pEntry = *it;
+
+        if(keyEQ(pEntry -> key, key))
+        {
+            if(deleteKeyInMap)
+            {
+                deleteKeyInMap(pEntry -> key);
+            }
+            if(deleteValueInMap)
+            {
+                deleteValueInMap(pEntry -> value);
+            }
+            list.removeItem(pEntry, &xMap<K, V>::deleteEntry);
+            this -> count--;
+
+            return true;
+        }
+    }
+    
+    //key: not found
+    stringstream os;
+    os << "key (" << key << ") is not found";
+    throw KeyNotFound(os.str());
 }
 
 template<class K, class V>
-bool xMap<K,V>::containsKey(K key){
-    //YOUR CODE IS HERE 
+bool xMap<K,V>::containsKey(K key)
+{
+    //YOUR CODE IS HERE
+    int index = hashCode(key, capacity);
+    DLinkedList<Entry *>&list = this -> table[index];
+
+    for(auto it = list.begin(); it != list.end(); it++)
+    {
+        Entry *pEntry = *it;
+
+        if(keyEQ(pEntry -> key, key)) return true;
+    }
+
+    return false;
+
 }
 
 template<class K, class V>
-bool xMap<K,V>::containsValue(V value){
-    //YOUR CODE IS HERE 
-}
-template<class K, class V>
-bool xMap<K,V>::empty(){
-    //YOUR CODE IS HERE 
+bool xMap<K,V>::containsValue(V value)
+{
+    //YOUR CODE IS HERE
+    for(int i = 0; i < capacity; i++)
+    {
+        DLinkedList<Entry *>&list = this -> table[i];
+
+        for(auto it = list.begin(); it != list.end(); it++)
+        {
+            Entry *pEntry = *it;
+
+            if(valueEQ(pEntry -> value, value)) return true;
+        }
+    }
+
+    return false;
 }
 
 template<class K, class V>
-int xMap<K,V>::size(){
-    //YOUR CODE IS HERE 
+bool xMap<K,V>::empty()
+{
+    //YOUR CODE IS HERE
+    return this -> count == 0;
 }
 
 template<class K, class V>
-void xMap<K,V>::clear(){
-    //YOUR CODE IS HERE 
+int xMap<K,V>::size()
+{
+    //YOUR CODE IS HERE
+    return this -> count;
 }
 
 template<class K, class V>
-DLinkedList<K> xMap<K,V>::keys(){
-    //YOUR CODE IS HERE 
+void xMap<K,V>::clear()
+{
+    //YOUR CODE IS HERE
+    this -> removeInternalData();
+    this -> capacity = 10;
+    this -> count = 0;
+    this -> table = new DLinkedList<Entry *>[capacity];
 }
 
 template<class K, class V>
-DLinkedList<V> xMap<K,V>::values(){
-    //YOUR CODE IS HERE 
+DLinkedList<K> xMap<K,V>::keys()
+{
+    //YOUR CODE IS HERE
+    DLinkedList<K> keyList;
+
+    for(int i = 0; i < capacity; i++)
+    {
+        DLinkedList<Entry *>&list = this -> table[i];
+
+        for(auto it = list.begin(); it != list.end(); it++)
+        {
+            Entry *pEntry = *it;
+            keyList.add(pEntry -> key);
+        }
+    }
+
+    return keyList;
 }
 
 template<class K, class V>
-DLinkedList<int> xMap<K,V>::clashes(){
-    //YOUR CODE IS HERE 
+DLinkedList<V> xMap<K,V>::values()
+{
+    //YOUR CODE IS HERE
+    DLinkedList<V> valueList;
+
+    for(int i = 0; i < capacity; i++)
+    {
+        DLinkedList<Entry *>&list = this -> table[i];
+
+        for(auto it = list.begin(); it != list.end(); it++)
+        {
+            Entry *pEntry = *it;
+            valueList.add(pEntry -> value);
+        }
+    }
+
+    return valueList;
 }
 
 template<class K, class V>
-string xMap<K,V>::toString(string (*key2str)(K&), string (*value2str)(V&)){
+DLinkedList<int> xMap<K,V>::clashes()
+{
+    //YOUR CODE IS HERE
+    DLinkedList<int> clashList;
+
+    for(int i = 0; i < capacity; i++)
+    {
+        DLinkedList<Entry *>&list = this -> table[i];
+        clashList.add(list.size());
+    }
+
+    return clashList;
+}
+
+template<class K, class V>
+string xMap<K,V>::toString(string (*key2str)(K&), string (*value2str)(V&))
+{
     stringstream os;
     string mark(50, '=');
     os << mark << endl;
     os << setw(12) << left << "capacity: "  << capacity << endl;
     os << setw(12) << left << "size: " << count << endl;
-    for(int idx=0; idx < capacity; idx++){
+    for(int idx=0; idx < capacity; idx++)
+    {
         DLinkedList<Entry*> list = table[idx];
         
         os << setw(4) << left << idx << ": ";
         stringstream itemos;
-        for(auto pEntry: list){
+        for(auto pEntry: list)
+        {
             itemos << " (";
             
             if(key2str != 0) itemos << key2str(pEntry->key);
@@ -348,10 +525,13 @@ string xMap<K,V>::toString(string (*key2str)(K&), string (*value2str)(V&)){
 template<class K, class V>
 void xMap<K,V>::moveEntries(
         DLinkedList<Entry*>* oldTable, int oldCapacity, 
-        DLinkedList<Entry*>* newTable, int newCapacity){
-    for(int old_index=0; old_index < oldCapacity; old_index++){
+        DLinkedList<Entry*>* newTable, int newCapacity)
+{
+    for(int old_index=0; old_index < oldCapacity; old_index++)
+    {
         DLinkedList<Entry*>& oldList= oldTable[old_index];
-        for(auto oldEntry: oldList){
+        for(auto oldEntry: oldList)
+        {
             int new_index = this->hashCode(oldEntry->key, newCapacity);
             DLinkedList<Entry*>& newList = newTable[new_index];
             newList.add(oldEntry);
@@ -365,7 +545,8 @@ void xMap<K,V>::moveEntries(
  *      i.e., the maximum number of entries does not exceed "loadFactor*capacity" 
  */
 template<class K, class V>
-void xMap<K,V>::ensureLoadFactor(int current_size){
+void xMap<K,V>::ensureLoadFactor(int current_size)
+{
     int maxSize = (int)(loadFactor*capacity);
    
     //cout << "ensureLoadFactor: count = " << count << "; maxSize = " << maxSize << endl;
@@ -385,7 +566,8 @@ void xMap<K,V>::ensureLoadFactor(int current_size){
  *      3. free the old table.
  */
 template<class K, class V>
-void xMap<K,V>::rehash(int newCapacity){
+void xMap<K,V>::rehash(int newCapacity)
+{
     DLinkedList<Entry*>* pOldMap = this->table;
     int oldCapacity = capacity;
     
@@ -413,11 +595,12 @@ void xMap<K,V>::rehash(int newCapacity){
  *      3. Remove table
  */
 template<class K, class V>
-void xMap<K,V>::removeInternalData(){
+void xMap<K,V>::removeInternalData()
+{
     //Remove user's data
     if(deleteKeys != 0) deleteKeys(this);
     if(deleteValues != 0) deleteValues(this);
-        
+
     //Remove all entries in the current map
     for(int idx=0; idx < this->capacity; idx++){
         DLinkedList<Entry*>& list = this->table[idx];
@@ -438,27 +621,28 @@ void xMap<K,V>::removeInternalData(){
  */
 
 template<class K, class V>
-void xMap<K,V>::copyMapFrom(const xMap<K,V>& map){
-    removeInternalData();
+void xMap<K,V>::copyMapFrom(const xMap<K,V>& map)
+{    
+    this -> capacity = 10;
+    this -> count = 0;
+    this -> table = new DLinkedList<Entry*>[capacity];
     
-    this->capacity = map.capacity;
-    this->count = 0;
-    this->table = new DLinkedList<Entry*>[capacity];
+    this -> hashCode = map.hashCode;
+    this -> loadFactor = map.loadFactor;
     
-    this->hashCode = hashCode;
-    this->loadFactor = loadFactor;
-    
-    this->valueEqual = valueEqual;
-    this->keyEqual = keyEqual;
+    this -> valueEqual = map.valueEqual;
+    this -> keyEqual = map.keyEqual;
     //SHOULD NOT COPY: deleteKeys, deleteValues => delete ONLY TIME in map if needed
-    
+    this -> deleteKeys = nullptr;
+    this -> deleteValues = nullptr;
     //copy entries
-    for(int idx=0; idx < map.capacity; idx++){
+    for(int idx = 0; idx < map.capacity; idx++)
+    {
         DLinkedList<Entry*>& list = map.table[idx];
-        for(auto pEntry: list){
+        for(auto pEntry: list)
+        {
             this->put(pEntry->key, pEntry->value);
         }
     }
 }
 #endif /* XMAP_H */
-
