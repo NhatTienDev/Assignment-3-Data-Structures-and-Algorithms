@@ -61,8 +61,8 @@ public:
 
         if(!edge)
         {
-            typename AbstractGraph<T>::Edge solution(fromNode, toNode);
-            throw EdgeNotFoundException(this -> edge2Str(solution));
+            typename AbstractGraph<T>::Edge dummyEdge(fromNode, toNode);
+            throw EdgeNotFoundException(this -> edge2Str(dummyEdge));
         }
 
         else fromNode -> removeTo(toNode);
@@ -88,7 +88,7 @@ public:
         DLinkedList<T> inEdge = this -> getInwardEdges(vertex);
         for (typename DLinkedList<T>::Iterator it = inEdge.begin(); it != inEdge.end(); it++)
         {
-            typename AbstractGraph<T>::VertexNode *toNode = this->getVertexNode(*it);
+            typename AbstractGraph<T>::VertexNode *toNode = this -> getVertexNode(*it);
 
             if(toNode != nullptr)
             {
