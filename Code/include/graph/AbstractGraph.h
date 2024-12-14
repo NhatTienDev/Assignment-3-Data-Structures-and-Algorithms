@@ -114,15 +114,15 @@ public:
         VertexNode *fromNode = getVertexNode(from);
         VertexNode *toNode = getVertexNode(to);
 
-        if(!fromNode) throw VertexNotFoundException(vertex2str(from));
-        if(!toNode) throw VertexNotFoundException(vertex2str(to));
+        if(!fromNode) throw VertexNotFoundException(this -> vertex2str(from));
+        if(!toNode) throw VertexNotFoundException(this -> vertex2str(to));
 
         Edge *edge = fromNode -> getEdge(toNode);
 
         if(!edge)
         {
-            Edge solution(fromNode, toNode);
-            throw EdgeNotFoundException(edge2Str(solution));
+            Edge tempEdge(fromNode, toNode);
+            throw EdgeNotFoundException(edge2Str(tempEdge));
         }
 
         return edge -> weight;
@@ -132,7 +132,7 @@ public:
     {
         //TODO
         VertexNode *fromNode = getVertexNode(from);
-        if(!fromNode) throw VertexNotFoundException(vertex2str(from));
+        if(!fromNode) throw VertexNotFoundException(this -> vertex2str(from));
 
         return fromNode -> getOutwardEdges();
     }
@@ -141,21 +141,14 @@ public:
     {
         //TODO
         VertexNode *toNode = getVertexNode(to);
-        if(!toNode) throw VertexNotFoundException(vertex2str(to));
+        if(!toNode) throw VertexNotFoundException(this -> vertex2str(to));
 
         DLinkedList<T> inwardEdges;
 
         for(typename DLinkedList<VertexNode*>::Iterator it = nodeList.begin(); it != nodeList.end(); it++)
         {
             VertexNode *fromNode = *it;
-
-            for(typename DLinkedList<Edge *>::Iterator edgeIterator = fromNode -> adList.begin(); edgeIterator != fromNode -> adList.end(); edgeIterator++)
-            {
-                if((*edgeIterator) -> to == toNode)
-                {
-                    inwardEdges.add(fromNode -> vertex);
-                }
-            }
+            if(fromNode -> getEdge(toNode) != nullptr) inwardEdges.add(fromNode -> vertex);
         }
 
         return inwardEdges;
@@ -176,7 +169,7 @@ public:
     virtual void clear()
     {
         //TODO
-        for(typename DLinkedList<VertexNode *>::Iterator it = nodeList.begin(); it != nodeList.end(); it++)
+        for(typename DLinkedList<VertexNode*>::Iterator it = nodeList.begin(); it != nodeList.end(); it++)
         {
             delete (*it);
         }
@@ -188,7 +181,7 @@ public:
     {
         //TODO
         VertexNode *toNode = getVertexNode(vertex);
-        if(!toNode) throw VertexNotFoundException(vertex2str(vertex));
+        if(!toNode) throw VertexNotFoundException(this -> vertex2str(vertex));
 
         return toNode -> inDegree();
     }
@@ -197,7 +190,7 @@ public:
     {
         //TODO
         VertexNode *fromNode = getVertexNode(vertex);
-        if(!fromNode) throw VertexNotFoundException(vertex2str(vertex));
+        if(!fromNode) throw VertexNotFoundException(this -> vertex2str(vertex));
 
         return fromNode -> outDegree();
     }
