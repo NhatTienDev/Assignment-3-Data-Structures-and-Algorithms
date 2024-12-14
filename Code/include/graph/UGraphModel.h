@@ -66,49 +66,49 @@ public:
 
         if(fromNode -> getEdge(toNode) == nullptr)
         {
-            typename AbstractGraph<T>::Edge solution(fromNode, toNode);
-            throw EdgeNotFoundException(this -> edge2Str(solution));
+            typename AbstractGraph<T>::Edge dummyEdge(fromNode, toNode);
+            throw EdgeNotFoundException(this -> edge2Str(dummyEdge));
         }
+
+        if(fromNode == toNode) fromNode -> removeTo(toNode);
         else
         {
             fromNode -> removeTo(toNode);
-            if(fromNode -> equals(toNode) == false)
-            {
-                toNode -> removeTo(fromNode);
-            }
+            toNode -> removeTo(fromNode);
         }
     }
 
     void remove(T vertex)
     {
         // TODO
-        typename AbstractGraph<T>::VertexNode *fromNode = this -> getVertexNode(vertex);
+        typename AbstractGraph<T>::VertexNode *removedNode = this -> getVertexNode(vertex);
 
-        if(fromNode == nullptr) throw VertexNotFoundException(this -> vertex2str(vertex));
+        if(removedNode == nullptr) throw VertexNotFoundException(this -> vertex2str(vertex));
 
-        DLinkedList<T> outEdge = this -> getOutwardEdges(vertex);
-        
-        for(typename DLinkedList<T>::Iterator it = outEdge.begin(); it != outEdge.end(); it++)
+        typename DLinkedList<typename AbstractGraph<T>::VertexNode*>::Iterator it = this -> nodeList.begin();
+
+        while(it != this -> nodeList.end())
         {
-            typename AbstractGraph<T>::VertexNode *toNode = this -> getVertexNode(*it);
+            typename AbstractGraph<T>::VertexNode *currentNode = *it;
 
-            if(fromNode -> equals(toNode) == false)
+            if(removedNode -> equals(currentNode) == false)
             {
-                fromNode -> removeTo(toNode);
-                toNode -> removeTo(fromNode);
+                removedNode -> removeTo(currentNode);
+                currentNode -> removeTo(removedNode);
             }
-            else
-            {
-                fromNode -> removeTo(toNode);
-            }
+            else removedNode -> removeTo(currentNode);
+
+            it++;
         }
 
-        if(this -> nodeList.removeItem(fromNode) == false)
-        {
-            throw std::runtime_error("Failed to remove vertex from nodeList");
-        }
+        this -> nodeList.removeItem(removedNode);
 
-        delete fromNode;
+        // if(this -> nodeList.removeItem(removedNode) == false)
+        // {
+        //     throw std::runtime_error("Failed to remove vertex from nodeList");
+        // }
+
+        delete removedNode;
     }
 
     static UGraphModel<T> *create(
