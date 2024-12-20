@@ -18,7 +18,6 @@
 #include <sstream>
 using namespace std;
 
-
 template<class T>
 class AbstractGraph: public IGraph<T>{
 public:
@@ -318,20 +317,17 @@ public:
         void connect(VertexNode* to, float weight=0)
         {
             //TODO
-            for(typename DLinkedList<Edge*>::Iterator it = adList.begin(); it != adList.end(); it++)
+            Edge *existingEdge = getEdge(to);
+
+            if(existingEdge) existingEdge -> weight = weight;
+
+            else
             {
-                if((*it) -> to == to)
-                {
-                    (*it) -> weight = weight;
-                    return;
-                }
+                Edge *edge = new Edge(this, to, weight);
+                adList.add(edge);
+                this -> outDegree_++;
+                to -> inDegree_++;
             }
-
-            Edge *edge = new Edge(this, to, weight);
-
-            adList.add(edge);
-            this -> outDegree_++;
-            to -> inDegree_++;
         }
 
         DLinkedList<T> getOutwardEdges()
@@ -370,13 +366,21 @@ public:
         void removeTo(VertexNode* to)
         {
             //TODO
-            Edge *edge = getEdge(to);
-            if(!edge) return;
+            typename DLinkedList<Edge*>::Iterator it = adList.begin();
 
-            adList.removeItem(edge);
-            delete edge;
-            this -> outDegree_--;
-            to -> inDegree_--;
+            while(it != adList.end())
+            {
+                Edge *edge = *it;
+                if(edge -> to == to)
+                {
+                    adList.removeItem(edge);
+                    this -> outDegree_--;
+                    to -> inDegree_--;
+                    delete edge;
+                    return;
+                }
+                it++;
+            }
         }
 
         int inDegree()

@@ -34,37 +34,65 @@ public:
         this->itemEqual = itemEqual;
         this->deleteUserData = deleteUserData;
     }
-    void push(T item){
-        //TODO: add item to the rear
+    
+    void push(T item)
+    {
+        // TODO: add item to the rear
+        list.add(item);
     }
-    T pop(){
-        //TODO: remove and return the front item
-        return T{}; //Placeholder
+
+    T pop()
+    {
+        // TODO: remove and return the front item
+        if(list.size() == 0)
+        {
+            throw Underflow("Queue");
+        }
+        
+        return list.removeAt(0);
     }
-    T& peek(){
-        //TODO: return the front item
-        return T{}; //Placeholder
+
+    T &peek()
+    {
+        // TODO: return the front item
+        if(list.size() == 0)
+        {
+            throw Underflow("Queue");
+        }
+
+        return list.get(0);
     }
-    bool empty(){
-        //TODO: check if the queue is empty
+
+    bool empty()
+    {
+        // TODO: check if the queue is empty
+        return list.empty();
+    }
+
+    int size()
+    {
+        // TODO: return the number of items in the queue
+        return list.size();
+    }
+
+    void clear()
+    {
+        // TODO: remove all items in the queue
+    }
+
+    bool remove(T item)
+    {
+        // TODO: remove the item from the queue
+        //      return true if the item is removed successfully
         return false;
     }
-    int size(){
-        //TODO: return the number of items in the queue
-        return 0;       
-    }
-    void clear(){
-        //TODO: remove all items in the queue
-    }
-    bool remove(T item){
-        //TODO: remove the item from the queue
-        //     return true if the item is removed successfully
+
+    bool contains(T item)
+    {
+        // TODO: check if the item is in the queue
         return false;
     }
-    bool contains(T item){
-        //TODO: check if the item is in the queue
-        return false;
-    }
+
     string  toString(string (*item2str)(T&)=0 ){
         stringstream os;
         os << "FRONT-TO-REAR: " << list.toString(item2str);

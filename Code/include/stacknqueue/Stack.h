@@ -35,37 +35,59 @@ public:
         this->itemEqual = itemEqual;
         this->deleteUserData = deleteUserData;
     }
-    void push(T item){
-        //TODO: add item to the top
+    
+    void push(T item)
+    {
+        // TODO: add item to the top
+        list.add(item);
     }
-    T pop(){
-        //TODO: remove and return the top item
-        return T{}; //Placeholder
+
+    T pop()
+    {
+        // TODO: remove and return the top item
+        if(empty()) throw Underflow("Stack");
+
+        return list.removeAt(list.size() - 1);
     }
-    T& peek(){
-        //TODO: return the top item
-        return T{}; //Placeholder
-    }    
-    bool empty(){
-        //TODO: check if the stack is empty
+
+    T &peek()
+    {
+        // TODO: return the top item
+        if(empty()) throw Underflow("Stack");
+
+        return list.get(list.size() - 1);
+    }
+
+    bool empty()
+    {
+        // TODO: check if the stack is empty
+        return list.empty();
+    }
+
+    int size()
+    {
+        // TODO: return the number of items in the stack
+        return list.size();
+    }
+
+    void clear()
+    {
+        // TODO: remove all items in the stack
+    }
+
+    bool remove(T item)
+    {
+        // TODO: remove the first occurrence of the item
+        //      return true if the item is removed successfully
         return false;
     }
-    int size(){
-        //TODO: return the number of items in the stack
-        return 0;
-    }
-    void clear(){
-        //TODO: remove all items in the stack
-    }
-    bool remove(T item){
-        //TODO: remove the first occurrence of the item
-        //     return true if the item is removed successfully
+
+    bool contains(T item)
+    {
+        // TODO: check if the item is in the stack
         return false;
     }
-    bool contains(T item){
-        //TODO: check if the item is in the stack
-        return false;
-    }
+
     string  toString(string (*item2str)(T&)=0 ){
         stringstream os;
         os << "FROM TOP: " << list.toString(item2str);
